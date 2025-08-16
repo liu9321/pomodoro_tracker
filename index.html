@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學習與生活追蹤器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4ECDC4;
+            --tertiary-color: #FFD166;
+            --quaternary-color: #6A0572;
+            --quinary-color: #1A936F;
+            --background-color: #F8F9FA;
+            --card-color: #FFFFFF;
+            --text-color: #333333;
+            --border-color: #E0E0E0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .date-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #FF5252;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .pomodoro-stat {
+            background: linear-gradient(135deg, var(--primary-color), #FF8E8E);
+        }
+
+        .recording-stat {
+            background: linear-gradient(135deg, var(--secondary-color), #7EDDD6);
+        }
+
+        .sleep-stat {
+            background: linear-gradient(135deg, var(--tertiary-color), #FFDC7E);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+        }
+
+        .history-section {
+            margin-top: 30px;
+        }
+
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-btn, .delete-btn {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .edit-btn {
+            background-color: var(--secondary-color);
+        }
+
+        .delete-btn {
+            background-color: var(--quaternary-color);
+        }
+
+        .achievements-section {
+            margin-top: 30px;
+        }
+
+        .achievement-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .achievement {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: var(--card-color);
+            box-shadow: var(--shadow);
+        }
+
+        .achievement-icon {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .achievement-name {
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .achievement-progress {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .charts-section {
+            margin-top: 30px;
+        }
+
+        .chart-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            background-color: var(--card-color);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            height: 400px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .settings-section {
+            margin-top: 30px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            background-color: var(--quinary-color);
+            box-shadow: var(--shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 1001;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .achievement-type {
+            margin-bottom: 20px;
+        }
+
+        .achievement-type-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>學習與生活追蹤器</h1>
+            <div class="date-display" id="currentDate"></div>
+        </header>
+
+        <div class="dashboard">
+            <!-- 番茄鐘輸入區 -->
+            <div class="card">
+                <h2 class="card-title">🍅 番茄鐘記錄</h2>
+                <div class="input-group">
+                    <label for="pomodoroDate">日期</label>
+                    <input type="date" id="pomodoroDate">
+                </div>
+                <div class="input-group">
+                    <label for="pomodoroCount">次數</label>
+                    <input type="number" id="pomodoroCount" min="0" placeholder="輸入番茄鐘次數">
+                </div>
+                <button id="addPomodoro">新增記錄</button>
+                
+                <div class="stats-container">
+                    <div class="stat-box pomodoro-stat">
+                        <div class="stat-value" id="totalPomodoros">0</div>
+                        <div class="stat-label">總次數</div>
+                    </div>
+                    <div class="stat-box pomodoro-stat">
+                        <div class="stat-value" id="avgPomodoros">0</div>
+                        <div class="stat-label">日均次數</div>
+                    </div>
+                    <div class="stat-box pomodoro-stat">
+                        <div class="stat-value" id="maxPomodoros">0</div>
+                        <div class="stat-label">單日最高</div>
+                    </div>
+                    <div class="stat-box pomodoro-stat">
+                        <div class="stat-value" id="pomodoroDays">0</div>
+                        <div class="stat-label">紀錄天數</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 錄音筆學習時間輸入區 -->
+            <div class="card">
+                <h2 class="card-title">🎧 錄音筆學習時間</h2>
+                <div class="input-group">
+                    <label for="recordingDate">日期</label>
+                    <input type="date" id="recordingDate">
+                </div>
+                <div class="input-group">
+                    <label for="recordingTime">學習時間 (分鐘)</label>
+                    <input type="number" id="recordingTime" min="0" placeholder="輸入學習時間">
+                </div>
+                <button id="addRecording">新增記錄</button>
+                
+                <div class="stats-container">
+                    <div class="stat-box recording-stat">
+                        <div class="stat-value" id="totalRecording">0</div>
+                        <div class="stat-label">總時間(分)</div>
+                    </div>
+                    <div class="stat-box recording-stat">
+                        <div class="stat-value" id="avgRecording">0</div>
+                        <div class="stat-label">日均時間(分)</div>
+                    </div>
+                    <div class="stat-box recording-stat">
+                        <div class="stat-value" id="maxRecording">0</div>
+                        <div class="stat-label">單日最長(分)</div>
+                    </div>
+                    <div class="stat-box recording-stat">
+                        <div class="stat-value" id="recordingDays">0</div>
+                        <div class="stat-label">紀錄天數</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 睡眠時間輸入區 -->
+            <div class="card">
+                <h2 class="card-title">😴 睡眠時間記錄</h2>
+                <div class="input-group">
+                    <label for="sleepDate">日期</label>
+                    <input type="date" id="sleepDate">
+                </div>
+                <div class="input-group">
+                    <label for="sleepHours">睡眠時間 (小時)</label>
+                    <input type="number" id="sleepHours" min="0" max="24" step="0.5" placeholder="輸入睡眠時間">
+                </div>
+                <div class="input-group">
+                    <label for="bedTime">上床時間</label>
+                    <input type="time" id="bedTime">
+                </div>
+                <button id="addSleep">新增記錄</button>
+                
+                <div class="stats-container">
+                    <div class="stat-box sleep-stat">
+                        <div class="stat-value" id="totalSleep">0</div>
+                        <div class="stat-label">總時間(小時)</div>
+                    </div>
+                    <div class="stat-box sleep-stat">
+                        <div class="stat-value" id="avgSleep">0</div>
+                        <div class="stat-label">日均時間(小時)</div>
+                    </div>
+                    <div class="stat-box sleep-stat">
+                        <div class="stat-value" id="maxSleep">0</div>
+                        <div class="stat-label">單日最長(小時)</div>
+                    </div>
+                    <div class="stat-box sleep-stat">
+                        <div class="stat-value" id="sleepDays">0</div>
+                        <div class="stat-label">紀錄天數</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 歷史記錄區 -->
+        <div class="history-section card">
+            <h2 class="card-title">📋 最近記錄</h2>
+            <div class="history-list" id="recentHistory"></div>
+            <button id="viewAllHistory" style="margin-top: 15px;">查看全部記錄</button>
+        </div>
+
+        <!-- 成就區 -->
+        <div class="achievements-section card">
+            <h2 class="card-title">🏆 成就徽章</h2>
+            <div id="achievementsByType">
+                <div class="achievement-type">
+                    <div class="achievement-type-title">🍅 番茄鐘成就</div>
+                    <div class="achievement-container" id="pomodoroAchievements"></div>
+                </div>
+                <div class="achievement-type">
+                    <div class="achievement-type-title">🎧 錄音筆學習成就</div>
+                    <div class="achievement-container" id="recordingAchievements"></div>
+                </div>
+                <div class="achievement-type">
+                    <div class="achievement-type-title">😴 睡眠成就</div>
+                    <div class="achievement-container" id="sleepAchievements"></div>
+                </div>
+            </div>
+            <button id="viewAllAchievements" style="margin-top: 15px;">查看全部成就</button>
+        </div>
+
+        <!-- 圖表區 -->
+        <div class="charts-section card">
+            <h2 class="card-title">📊 統計圖表</h2>
+            <div class="chart-controls">
+                <select id="chartType">
+                    <option value="pomodoro">番茄鐘</option>
+                    <option value="recording">錄音筆學習</option>
+                    <option value="sleep">睡眠時間</option>
+                </select>
+                <select id="chartPeriod">
+                    <option value="week">週統計</option>
+                    <option value="month">月統計</option>
+                    <option value="quarter">季統計</option>
+                    <option value="year">年統計</option>
+                </select>
+                <select id="chartStyle">
+                    <option value="bar">長條圖</option>
+                    <option value="line">折線圖</option>
+                </select>
+                <button id="updateChart">更新圖表</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="statsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 設定區 -->
+        <div class="settings-section card">
+            <h2 class="card-title">⚙️ 設定</h2>
+            <div class="input-group">
+                <label for="sleepGoal">睡眠目標 (小時)</label>
+                <input type="number" id="sleepGoal" min="0" max="24" step="0.5" value="6">
+            </div>
+            <div class="input-group">
+                <label for="bedTimeLimit">上床時間限制</label>
+                <input type="time" id="bedTimeLimit" value="01:00">
+            </div>
+            <button id="saveSettings">儲存設定</button>
+        </div>
+    </div>
+
+    <!-- 歷史記錄模態框 -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeHistoryModal">&times;</span>
+            <h2>全部歷史記錄</h2>
+            <div class="history-list" id="allHistory"></div>
+        </div>
+    </div>
+
+    <!-- 成就模態框 -->
+    <div class="modal" id="achievementsModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeAchievementsModal">&times;</span>
+            <h2>全部成就徽章</h2>
+            <div id="allAchievementsByType">
+                <div class="achievement-type">
+                    <div class="achievement-type-title">🍅 番茄鐘成就</div>
+                    <div class="achievement-container" id="allPomodoroAchievements"></div>
+                </div>
+                <div class="achievement-type">
+                    <div class="achievement-type-title">🎧 錄音筆學習成就</div>
+                    <div class="achievement-container" id="allRecordingAchievements"></div>
+                </div>
+                <div class="achievement-type">
+                    <div class="achievement-type-title">😴 睡眠成就</div>
+                    <div class="achievement-container" id="allSleepAchievements"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知 -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 初始化變數
+        let pomodoroRecords = JSON.parse(localStorage.getItem('pomodoroRecords')) || [];
+        let recordingRecords = JSON.parse(localStorage.getItem('recordingRecords')) || [];
+        let sleepRecords = JSON.parse(localStorage.getItem('sleepRecords')) || [];
+        let achievements = JSON.parse(localStorage.getItem('achievements')) || [];
+        let settings = JSON.parse(localStorage.getItem('settings')) || {
+            sleepGoal: 6,
+            bedTimeLimit: '01:00'
+        };
+        
+        // 編輯狀態變數
+        let editingRecord = null;
+
+        // 當前日期和星期
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-TW', options);
+            
+            // 設定輸入框的預設日期為今天
+            const today = now.toISOString().split('T')[0];
+            document.getElementById('pomodoroDate').value = today;
+            document.getElementById('recordingDate').value = today;
+            document.getElementById('sleepDate').value = today;
+        }
+
+        // 顯示通知
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 新增番茄鐘記錄
+        document.getElementById('addPomodoro').addEventListener('click', function() {
+            const date = document.getElementById('pomodoroDate').value;
+            const count = parseInt(document.getElementById('pomodoroCount').value);
+            
+            if (!date || isNaN(count) || count < 0) {
+                showNotification('請輸入有效的日期和次數');
+                return;
+            }
+            
+            // 如果是編輯模式
+            if (editingRecord && editingRecord.type === 'pomodoro') {
+                // 找到要編輯的記錄索引
+                const index = pomodoroRecords.findIndex(r => r.date === editingRecord.date);
+                if (index !== -1) {
+                    // 更新記錄
+                    pomodoroRecords[index] = { date, count };
+                    showNotification('番茄鐘記錄已更新');
+                }
+                // 退出編輯模式
+                editingRecord = null;
+            } else {
+                // 檢查是否已有該日期的記錄
+                const existingIndex = pomodoroRecords.findIndex(record => record.date === date);
+                
+                if (existingIndex !== -1) {
+                    // 更新現有記錄
+                    pomodoroRecords[existingIndex].count = count;
+                    showNotification('番茄鐘記錄已更新');
+                } else {
+                    // 新增記錄
+                    pomodoroRecords.push({ date, count });
+                    showNotification('番茄鐘記錄已新增');
+                }
+            }
+            
+            // 儲存到 localStorage
+            localStorage.setItem('pomodoroRecords', JSON.stringify(pomodoroRecords));
+            
+            // 清空輸入框
+            document.getElementById('pomodoroCount').value = '';
+            
+            // 更新統計和成就
+            updatePomodoroStats();
+            updateAllAchievements();
+            updateRecentHistory();
+        });
+
+        // 新增錄音筆學習記錄
+        document.getElementById('addRecording').addEventListener('click', function() {
+            const date = document.getElementById('recordingDate').value;
+            const time = parseInt(document.getElementById('recordingTime').value);
+            
+            if (!date || isNaN(time) || time < 0) {
+                showNotification('請輸入有效的日期和學習時間');
+                return;
+            }
+            
+            // 如果是編輯模式
+            if (editingRecord && editingRecord.type === 'recording') {
+                // 找到要編輯的記錄索引
+                const index = recordingRecords.findIndex(r => r.date === editingRecord.date);
+                if (index !== -1) {
+                    // 更新記錄
+                    recordingRecords[index] = { date, time };
+                    showNotification('錄音筆學習記錄已更新');
+                }
+                // 退出編輯模式
+                editingRecord = null;
+            } else {
+                // 檢查是否已有該日期的記錄
+                const existingIndex = recordingRecords.findIndex(record => record.date === date);
+                
+                if (existingIndex !== -1) {
+                    // 更新現有記錄
+                    recordingRecords[existingIndex].time = time;
+                    showNotification('錄音筆學習記錄已更新');
+                } else {
+                    // 新增記錄
+                    recordingRecords.push({ date, time });
+                    showNotification('錄音筆學習記錄已新增');
+                }
+            }
+            
+            // 儲存到 localStorage
+            localStorage.setItem('recordingRecords', JSON.stringify(recordingRecords));
+            
+            // 清空輸入框
+            document.getElementById('recordingTime').value = '';
+            
+            // 更新統計和成就
+            updateRecordingStats();
+            updateAllAchievements();
+            updateRecentHistory();
+        });
+
+        // 新增睡眠記錄
+        document.getElementById('addSleep').addEventListener('click', function() {
+            const date = document.getElementById('sleepDate').value;
+            const hours = parseFloat(document.getElementById('sleepHours').value);
+            const bedTime = document.getElementById('bedTime').value;
+            
+            if (!date || isNaN(hours) || hours < 0 || !bedTime) {
+                showNotification('請輸入有效的日期、睡眠時間和上床時間');
+                return;
+            }
+            
+            // 如果是編輯模式
+            if (editingRecord && editingRecord.type === 'sleep') {
+                // 找到要編輯的記錄索引
+                const index = sleepRecords.findIndex(r => r.date === editingRecord.date);
+                if (index !== -1) {
+                    // 更新記錄
+                    sleepRecords[index] = { date, hours, bedTime };
+                    showNotification('睡眠記錄已更新');
+                }
+                // 退出編輯模式
+                editingRecord = null;
+            } else {
+                // 檢查是否已有該日期的記錄
+                const existingIndex = sleepRecords.findIndex(record => record.date === date);
+                
+                if (existingIndex !== -1) {
+                    // 更新現有記錄
+                    sleepRecords[existingIndex].hours = hours;
+                    sleepRecords[existingIndex].bedTime = bedTime;
+                    showNotification('睡眠記錄已更新');
+                } else {
+                    // 新增記錄
+                    sleepRecords.push({ date, hours, bedTime });
+                    showNotification('睡眠記錄已新增');
+                }
+            }
+            
+            // 儲存到 localStorage
+            localStorage.setItem('sleepRecords', JSON.stringify(sleepRecords));
+            
+            // 清空輸入框
+            document.getElementById('sleepHours').value = '';
+            document.getElementById('bedTime').value = '';
+            
+            // 更新統計和成就
+            updateSleepStats();
+            updateAllAchievements();
+            updateRecentHistory();
+        });
+
+        // 更新番茄鐘統計
+        function updatePomodoroStats() {
+            const total = pomodoroRecords.length > 0 ? 
+                pomodoroRecords.reduce((sum, record) => sum + record.count, 0) : 0;
+            const avg = pomodoroRecords.length > 0 ? 
+                (total / pomodoroRecords.length).toFixed(1) : 0;
+            const max = pomodoroRecords.length > 0 ? 
+                Math.max(...pomodoroRecords.map(record => record.count)) : 0;
+            
+            document.getElementById('totalPomodoros').textContent = total;
+            document.getElementById('avgPomodoros').textContent = avg;
+            document.getElementById('maxPomodoros').textContent = max;
+            document.getElementById('pomodoroDays').textContent = pomodoroRecords.length;
+        }
+
+        // 更新錄音筆學習統計
+        function updateRecordingStats() {
+            const total = recordingRecords.length > 0 ? 
+                recordingRecords.reduce((sum, record) => sum + record.time, 0) : 0;
+            const avg = recordingRecords.length > 0 ? 
+                (total / recordingRecords.length).toFixed(1) : 0;
+            const max = recordingRecords.length > 0 ? 
+                Math.max(...recordingRecords.map(record => record.time)) : 0;
+            
+            document.getElementById('totalRecording').textContent = total;
+            document.getElementById('avgRecording').textContent = avg;
+            document.getElementById('maxRecording').textContent = max;
+            document.getElementById('recordingDays').textContent = recordingRecords.length;
+        }
+
+        // 更新睡眠統計
+        function updateSleepStats() {
+            const total = sleepRecords.length > 0 ? 
+                sleepRecords.reduce((sum, record) => sum + record.hours, 0) : 0;
+            const avg = sleepRecords.length > 0 ? 
+                (total / sleepRecords.length).toFixed(1) : 0;
+            const max = sleepRecords.length > 0 ? 
+                Math.max(...sleepRecords.map(record => record.hours)) : 0;
+            
+            document.getElementById('totalSleep').textContent = total;
+            document.getElementById('avgSleep').textContent = avg;
+            document.getElementById('maxSleep').textContent = max;
+            document.getElementById('sleepDays').textContent = sleepRecords.length;
+        }
+
+        // 更新所有成就
+        function updateAllAchievements() {
+            // 先清除所有非循環成就
+            achievements = achievements.filter(achievement => {
+                return achievement.name.includes('之神') || achievement.name.includes('傳奇');
+            });
+            
+            // 重新檢查所有成就
+            checkPomodoroAchievements();
+            checkRecordingAchievements();
+            checkSleepAchievements();
+            
+            // 儲存更新後的成就
+            localStorage.setItem('achievements', JSON.stringify(achievements));
+            
+            // 更新成就顯示
+            updateRecentAchievements();
+        }
+
+        // 檢查番茄鐘成就
+        function checkPomodoroAchievements() {
+            const total = pomodoroRecords.reduce((sum, record) => sum + record.count, 0);
+            const achievementLevels = [
+                { name: '初學者', icon: '🌱', threshold: 10 },
+                { name: '專注新手', icon: '🌿', threshold: 50 },
+                { name: '專注達人', icon: '🌳', threshold: 100 },
+                { name: '專注大師', icon: '🏔️', threshold: 300 },
+                { name: '專注專家', icon: '🌋', threshold: 500 }
+            ];
+            
+            // 檢查一般成就
+            achievementLevels.forEach(level => {
+                if (total >= level.threshold && !achievements.some(a => a.name === level.name && a.type === 'pomodoro')) {
+                    achievements.push({
+                        name: level.name,
+                        icon: level.icon,
+                        type: 'pomodoro',
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    showNotification(`恭喜獲得成就: ${level.name} ${level.icon}`);
+                }
+            });
+            
+            // 檢查1000次成就
+            const thousandCount = Math.floor(total / 1000);
+            for (let i = 1; i <= thousandCount; i++) {
+                const achievementName = `專注之神 (${i}x1000)`;
+                if (!achievements.some(a => a.name === achievementName && a.type === 'pomodoro')) {
+                    achievements.push({
+                        name: achievementName,
+                        icon: '👑',
+                        type: 'pomodoro',
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    showNotification(`恭喜獲得成就: ${achievementName} 👑`);
+                }
+            }
+        }
+
+        // 檢查錄音筆學習成就
+        function checkRecordingAchievements() {
+            const total = recordingRecords.reduce((sum, record) => sum + record.time, 0);
+            const achievementLevels = [
+                { name: '初學者', icon: '🎧', threshold: 100 },
+                { name: '學習新手', icon: '📚', threshold: 500 },
+                { name: '學習達人', icon: '📖', threshold: 1000 },
+                { name: '學習大師', icon: '📚', threshold: 3000 },
+                { name: '學習專家', icon: '📜', threshold: 5000 }
+            ];
+            
+            // 檢查一般成就
+            achievementLevels.forEach(level => {
+                if (total >= level.threshold && !achievements.some(a => a.name === level.name && a.type === 'recording')) {
+                    achievements.push({
+                        name: level.name,
+                        icon: level.icon,
+                        type: 'recording',
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    showNotification(`恭喜獲得成就: ${level.name} ${level.icon}`);
+                }
+            });
+            
+            // 檢查10000分鐘成就
+            const tenThousandCount = Math.floor(total / 10000);
+            for (let i = 1; i <= tenThousandCount; i++) {
+                const achievementName = `學習之神 (${i}x10000)`;
+                if (!achievements.some(a => a.name === achievementName && a.type === 'recording')) {
+                    achievements.push({
+                        name: achievementName,
+                        icon: '🧠',
+                        type: 'recording',
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    showNotification(`恭喜獲得成就: ${achievementName} 🧠`);
+                }
+            }
+        }
+
+        // 檢查睡眠成就
+        function checkSleepAchievements() {
+            // 排序睡眠記錄
+            const sortedSleepRecords = [...sleepRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const achievementLevels = [
+                { name: '初學者', icon: '😴', threshold: 5 },
+                { name: '睡眠新手', icon: '🛌', threshold: 10 },
+                { name: '睡眠達人', icon: '🌙', threshold: 20 },
+                { name: '睡眠專家', icon: '⭐', threshold: 30 },
+                { name: '睡眠大師', icon: '💫', threshold: 50 }
+            ];
+            
+            // 檢查連續優質睡眠
+            let consecutiveDays = 0;
+            const bedTimeLimit = settings.bedTimeLimit;
+            
+            for (let i = 0; i < sortedSleepRecords.length; i++) {
+                const record = sortedSleepRecords[i];
+                
+                // 檢查是否達到睡眠目標和上床時間限制
+                if (record.hours >= settings.sleepGoal && record.bedTime <= bedTimeLimit) {
+                    consecutiveDays++;
+                    
+                    // 檢查是否達到成就門檻
+                    achievementLevels.forEach(level => {
+                        if (consecutiveDays >= level.threshold && !achievements.some(a => a.name === level.name && a.type === 'sleep')) {
+                            achievements.push({
+                                name: level.name,
+                                icon: level.icon,
+                                type: 'sleep',
+                                date: new Date().toISOString().split('T')[0]
+                            });
+                            showNotification(`恭喜獲得成就: ${level.name} ${level.icon}`);
+                        }
+                    });
+                    
+                    // 檢查100天成就
+                    if (consecutiveDays >= 100 && !achievements.some(a => a.name === '睡眠傳奇' && a.type === 'sleep')) {
+                        achievements.push({
+                            name: '睡眠傳奇',
+                            icon: '👑',
+                            type: 'sleep',
+                            date: new Date().toISOString().split('T')[0]
+                        });
+                        showNotification('恭喜獲得成就: 睡眠傳奇 👑');
+                    }
+                } else {
+                    consecutiveDays = 0;
+                }
+            }
+        }
+
+        // 更新最近歷史記錄
+        function updateRecentHistory() {
+            const recentHistory = document.getElementById('recentHistory');
+            recentHistory.innerHTML = '';
+            
+            // 合併所有記錄並按日期排序
+            const allRecords = [
+                ...pomodoroRecords.map(r => ({ ...r, type: 'pomodoro', display: `番茄鐘: ${r.count} 次` })),
+                ...recordingRecords.map(r => ({ ...r, type: 'recording', display: `錄音筆學習: ${r.time} 分鐘` })),
+                ...sleepRecords.map(r => ({ ...r, type: 'sleep', display: `睡眠: ${r.hours} 小時` }))
+            ];
+            
+            // 按日期降序排序
+            allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // 只顯示最近3條記錄
+            const recentRecords = allRecords.slice(0, 3);
+            
+            recentRecords.forEach(record => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const recordInfo = document.createElement('div');
+                recordInfo.textContent = `${record.date}: ${record.display}`;
+                
+                const recordActions = document.createElement('div');
+                recordActions.className = 'history-actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.textContent = '編輯';
+                editBtn.addEventListener('click', () => editRecord(record));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '刪除';
+                deleteBtn.addEventListener('click', () => deleteRecord(record));
+                
+                recordActions.appendChild(editBtn);
+                recordActions.appendChild(deleteBtn);
+                
+                historyItem.appendChild(recordInfo);
+                historyItem.appendChild(recordActions);
+                
+                recentHistory.appendChild(historyItem);
+            });
+            
+            if (recentRecords.length === 0) {
+                recentHistory.innerHTML = '<div class="history-item">暫無記錄</div>';
+            }
+        }
+
+        // 編輯記錄
+        function editRecord(record) {
+            // 設置編輯模式
+            editingRecord = {
+                type: record.type,
+                date: record.date
+            };
+            
+            if (record.type === 'pomodoro') {
+                document.getElementById('pomodoroDate').value = record.date;
+                document.getElementById('pomodoroCount').value = record.count;
+            } else if (record.type === 'recording') {
+                document.getElementById('recordingDate').value = record.date;
+                document.getElementById('recordingTime').value = record.time;
+            } else if (record.type === 'sleep') {
+                document.getElementById('sleepDate').value = record.date;
+                document.getElementById('sleepHours').value = record.hours;
+                document.getElementById('bedTime').value = record.bedTime;
+            }
+            
+            showNotification('記錄已載入，請修改後重新提交');
+        }
+
+        // 刪除記錄
+        function deleteRecord(record) {
+            if (confirm('確定要刪除這條記錄嗎？')) {
+                if (record.type === 'pomodoro') {
+                    pomodoroRecords = pomodoroRecords.filter(r => r.date !== record.date);
+                    localStorage.setItem('pomodoroRecords', JSON.stringify(pomodoroRecords));
+                    updatePomodoroStats();
+                } else if (record.type === 'recording') {
+                    recordingRecords = recordingRecords.filter(r => r.date !== record.date);
+                    localStorage.setItem('recordingRecords', JSON.stringify(recordingRecords));
+                    updateRecordingStats();
+                } else if (record.type === 'sleep') {
+                    sleepRecords = sleepRecords.filter(r => r.date !== record.date);
+                    localStorage.setItem('sleepRecords', JSON.stringify(sleepRecords));
+                    updateSleepStats();
+                }
+                
+                // 更新所有成就（因為刪除記錄可能影響成就）
+                updateAllAchievements();
+                updateRecentHistory();
+                showNotification('記錄已刪除');
+            }
+        }
+
+        // 更新最近成就
+        function updateRecentAchievements() {
+            // 更新番茄鐘成就
+            const pomodoroAchievements = document.getElementById('pomodoroAchievements');
+            pomodoroAchievements.innerHTML = '';
+            
+            const totalPomodoros = pomodoroRecords.reduce((sum, record) => sum + record.count, 0);
+            const pomodoroAchievementLevels = [
+                { name: '初學者', icon: '🌱', threshold: 10 },
+                { name: '專注新手', icon: '🌿', threshold: 50 },
+                { name: '專注達人', icon: '🌳', threshold: 100 },
+                { name: '專注大師', icon: '🏔️', threshold: 300 },
+                { name: '專注專家', icon: '🌋', threshold: 500 }
+            ];
+            
+            // 顯示一般成就
+            pomodoroAchievementLevels.forEach(level => {
+                const isAchieved = totalPomodoros >= level.threshold;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = level.icon;
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = level.name;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                progressDiv.textContent = isAchieved ? '已達成' : `${totalPomodoros}/${level.threshold}`;
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                pomodoroAchievements.appendChild(achievementDiv);
+            });
+            
+            // 顯示循環成就
+            const thousandCount = Math.floor(totalPomodoros / 1000);
+            const currentRound = thousandCount + 1;
+            const currentProgress = totalPomodoros % 1000;
+            
+            const godAchievementDiv = document.createElement('div');
+            godAchievementDiv.className = 'achievement';
+            
+            const godIconDiv = document.createElement('div');
+            godIconDiv.className = 'achievement-icon';
+            godIconDiv.textContent = '👑';
+            
+            const godNameDiv = document.createElement('div');
+            godNameDiv.className = 'achievement-name';
+            godNameDiv.textContent = `專注之神 (${currentRound}x1000)`;
+            
+            const godProgressDiv = document.createElement('div');
+            godProgressDiv.className = 'achievement-progress';
+            godProgressDiv.textContent = `${currentProgress}/1000`;
+            
+            godAchievementDiv.appendChild(godIconDiv);
+            godAchievementDiv.appendChild(godNameDiv);
+            godAchievementDiv.appendChild(godProgressDiv);
+            
+            pomodoroAchievements.appendChild(godAchievementDiv);
+            
+            // 更新錄音筆學習成就
+            const recordingAchievements = document.getElementById('recordingAchievements');
+            recordingAchievements.innerHTML = '';
+            
+            const totalRecording = recordingRecords.reduce((sum, record) => sum + record.time, 0);
+            const recordingAchievementLevels = [
+                { name: '初學者', icon: '🎧', threshold: 100 },
+                { name: '學習新手', icon: '📚', threshold: 500 },
+                { name: '學習達人', icon: '📖', threshold: 1000 },
+                { name: '學習大師', icon: '📚', threshold: 3000 },
+                { name: '學習專家', icon: '📜', threshold: 5000 }
+            ];
+            
+            // 顯示一般成就
+            recordingAchievementLevels.forEach(level => {
+                const isAchieved = totalRecording >= level.threshold;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = level.icon;
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = level.name;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                progressDiv.textContent = isAchieved ? '已達成' : `${totalRecording}/${level.threshold}`;
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                recordingAchievements.appendChild(achievementDiv);
+            });
+            
+            // 顯示循環成就
+            const tenThousandCount = Math.floor(totalRecording / 10000);
+            const currentRoundRecording = tenThousandCount + 1;
+            const currentProgressRecording = totalRecording % 10000;
+            
+            const godRecordingAchievementDiv = document.createElement('div');
+            godRecordingAchievementDiv.className = 'achievement';
+            
+            const godRecordingIconDiv = document.createElement('div');
+            godRecordingIconDiv.className = 'achievement-icon';
+            godRecordingIconDiv.textContent = '🧠';
+            
+            const godRecordingNameDiv = document.createElement('div');
+            godRecordingNameDiv.className = 'achievement-name';
+            godRecordingNameDiv.textContent = `學習之神 (${currentRoundRecording}x10000)`;
+            
+            const godRecordingProgressDiv = document.createElement('div');
+            godRecordingProgressDiv.className = 'achievement-progress';
+            godRecordingProgressDiv.textContent = `${currentProgressRecording}/10000`;
+            
+            godRecordingAchievementDiv.appendChild(godRecordingIconDiv);
+            godRecordingAchievementDiv.appendChild(godRecordingNameDiv);
+            godRecordingAchievementDiv.appendChild(godRecordingProgressDiv);
+            
+            recordingAchievements.appendChild(godRecordingAchievementDiv);
+            
+            // 更新睡眠成就
+            const sleepAchievements = document.getElementById('sleepAchievements');
+            sleepAchievements.innerHTML = '';
+            
+            // 計算連續優質睡眠天數
+            const sortedSleepRecords = [...sleepRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let consecutiveDays = 0;
+            const bedTimeLimit = settings.bedTimeLimit;
+            let maxConsecutiveDays = 0;
+            
+            for (let i = 0; i < sortedSleepRecords.length; i++) {
+                const record = sortedSleepRecords[i];
+                
+                if (record.hours >= settings.sleepGoal && record.bedTime <= bedTimeLimit) {
+                    consecutiveDays++;
+                    maxConsecutiveDays = Math.max(maxConsecutiveDays, consecutiveDays);
+                } else {
+                    consecutiveDays = 0;
+                }
+            }
+            
+            const sleepAchievementLevels = [
+                { name: '初學者', icon: '😴', threshold: 5 },
+                { name: '睡眠新手', icon: '🛌', threshold: 10 },
+                { name: '睡眠達人', icon: '🌙', threshold: 20 },
+                { name: '睡眠專家', icon: '⭐', threshold: 30 },
+                { name: '睡眠大師', icon: '💫', threshold: 50 }
+            ];
+            
+            // 顯示一般成就
+            sleepAchievementLevels.forEach(level => {
+                const isAchieved = maxConsecutiveDays >= level.threshold;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = level.icon;
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = level.name;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                progressDiv.textContent = isAchieved ? '已達成' : `${maxConsecutiveDays}/${level.threshold}`;
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                sleepAchievements.appendChild(achievementDiv);
+            });
+            
+            // 顯示循環成就
+            const hundredCount = Math.floor(maxConsecutiveDays / 100);
+            const currentRoundSleep = hundredCount + 1;
+            const currentProgressSleep = maxConsecutiveDays % 100;
+            
+            const legendAchievementDiv = document.createElement('div');
+            legendAchievementDiv.className = 'achievement';
+            
+            const legendIconDiv = document.createElement('div');
+            legendIconDiv.className = 'achievement-icon';
+            legendIconDiv.textContent = '👑';
+            
+            const legendNameDiv = document.createElement('div');
+            legendNameDiv.className = 'achievement-name';
+            legendNameDiv.textContent = `睡眠傳奇 (${currentRoundSleep}x100)`;
+            
+            const legendProgressDiv = document.createElement('div');
+            legendProgressDiv.className = 'achievement-progress';
+            legendProgressDiv.textContent = `${currentProgressSleep}/100`;
+            
+            legendAchievementDiv.appendChild(legendIconDiv);
+            legendAchievementDiv.appendChild(legendNameDiv);
+            legendAchievementDiv.appendChild(legendProgressDiv);
+            
+            sleepAchievements.appendChild(legendAchievementDiv);
+        }
+
+        // 查看全部歷史記錄
+        document.getElementById('viewAllHistory').addEventListener('click', function() {
+            renderAllHistory();
+            document.getElementById('historyModal').style.display = 'flex';
+        });
+
+        // 渲染全部歷史記錄
+        function renderAllHistory() {
+            const allHistory = document.getElementById('allHistory');
+            allHistory.innerHTML = '';
+            
+            // 合併所有記錄並按日期排序
+            const allRecords = [
+                ...pomodoroRecords.map(r => ({ ...r, type: 'pomodoro', display: `番茄鐘: ${r.count} 次` })),
+                ...recordingRecords.map(r => ({ ...r, type: 'recording', display: `錄音筆學習: ${r.time} 分鐘` })),
+                ...sleepRecords.map(r => ({ ...r, type: 'sleep', display: `睡眠: ${r.hours} 小時` }))
+            ];
+            
+            // 按日期降序排序
+            allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            allRecords.forEach(record => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const recordInfo = document.createElement('div');
+                recordInfo.textContent = `${record.date}: ${record.display}`;
+                
+                const recordActions = document.createElement('div');
+                recordActions.className = 'history-actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.textContent = '編輯';
+                editBtn.addEventListener('click', () => {
+                    editRecord(record);
+                    document.getElementById('historyModal').style.display = 'none';
+                });
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '刪除';
+                deleteBtn.addEventListener('click', () => {
+                    deleteRecord(record);
+                    renderAllHistory();
+                });
+                
+                recordActions.appendChild(editBtn);
+                recordActions.appendChild(deleteBtn);
+                
+                historyItem.appendChild(recordInfo);
+                historyItem.appendChild(recordActions);
+                
+                allHistory.appendChild(historyItem);
+            });
+            
+            if (allRecords.length === 0) {
+                allHistory.innerHTML = '<div class="history-item">暫無記錄</div>';
+            }
+        }
+
+        // 查看全部成就
+        document.getElementById('viewAllAchievements').addEventListener('click', function() {
+            renderAllAchievements();
+            document.getElementById('achievementsModal').style.display = 'flex';
+        });
+
+        // 渲染全部成就
+        function renderAllAchievements() {
+            // 更新番茄鐘成就
+            const allPomodoroAchievements = document.getElementById('allPomodoroAchievements');
+            allPomodoroAchievements.innerHTML = '';
+            
+            const totalPomodoros = pomodoroRecords.reduce((sum, record) => sum + record.count, 0);
+            const pomodoroAchievementLevels = [
+                { name: '初學者', icon: '🌱', threshold: 10 },
+                { name: '專注新手', icon: '🌿', threshold: 50 },
+                { name: '專注達人', icon: '🌳', threshold: 100 },
+                { name: '專注大師', icon: '🏔️', threshold: 300 },
+                { name: '專注專家', icon: '🌋', threshold: 500 }
+            ];
+            
+            // 顯示一般成就
+            pomodoroAchievementLevels.forEach(level => {
+                const isAchieved = totalPomodoros >= level.threshold;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = level.icon;
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = level.name;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                progressDiv.textContent = isAchieved ? '已達成' : `${totalPomodoros}/${level.threshold}`;
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                allPomodoroAchievements.appendChild(achievementDiv);
+            });
+            
+            // 顯示循環成就
+            const thousandCount = Math.floor(totalPomodoros / 1000);
+            for (let i = 1; i <= thousandCount + 1; i++) {
+                const isAchieved = i <= thousandCount;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = '👑';
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = `專注之神 (${i}x1000)`;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                if (isAchieved) {
+                    progressDiv.textContent = '已達成';
+                } else {
+                    const currentProgress = totalPomodoros % 1000;
+                    progressDiv.textContent = `${currentProgress}/1000`;
+                }
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                allPomodoroAchievements.appendChild(achievementDiv);
+            }
+            
+            // 更新錄音筆學習成就
+            const allRecordingAchievements = document.getElementById('allRecordingAchievements');
+            allRecordingAchievements.innerHTML = '';
+            
+            const totalRecording = recordingRecords.reduce((sum, record) => sum + record.time, 0);
+            const recordingAchievementLevels = [
+                { name: '初學者', icon: '🎧', threshold: 100 },
+                { name: '學習新手', icon: '📚', threshold: 500 },
+                { name: '學習達人', icon: '📖', threshold: 1000 },
+                { name: '學習大師', icon: '📚', threshold: 3000 },
+                { name: '學習專家', icon: '📜', threshold: 5000 }
+            ];
+            
+            // 顯示一般成就
+            recordingAchievementLevels.forEach(level => {
+                const isAchieved = totalRecording >= level.threshold;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = level.icon;
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = level.name;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                progressDiv.textContent = isAchieved ? '已達成' : `${totalRecording}/${level.threshold}`;
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                allRecordingAchievements.appendChild(achievementDiv);
+            });
+            
+            // 顯示循環成就
+            const tenThousandCount = Math.floor(totalRecording / 10000);
+            for (let i = 1; i <= tenThousandCount + 1; i++) {
+                const isAchieved = i <= tenThousandCount;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = '🧠';
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = `學習之神 (${i}x10000)`;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                if (isAchieved) {
+                    progressDiv.textContent = '已達成';
+                } else {
+                    const currentProgress = totalRecording % 10000;
+                    progressDiv.textContent = `${currentProgress}/10000`;
+                }
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                allRecordingAchievements.appendChild(achievementDiv);
+            }
+            
+            // 更新睡眠成就
+            const allSleepAchievements = document.getElementById('allSleepAchievements');
+            allSleepAchievements.innerHTML = '';
+            
+            // 計算連續優質睡眠天數
+            const sortedSleepRecords = [...sleepRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let consecutiveDays = 0;
+            const bedTimeLimit = settings.bedTimeLimit;
+            let maxConsecutiveDays = 0;
+            
+            for (let i = 0; i < sortedSleepRecords.length; i++) {
+                const record = sortedSleepRecords[i];
+                
+                if (record.hours >= settings.sleepGoal && record.bedTime <= bedTimeLimit) {
+                    consecutiveDays++;
+                    maxConsecutiveDays = Math.max(maxConsecutiveDays, consecutiveDays);
+                } else {
+                    consecutiveDays = 0;
+                }
+            }
+            
+            const sleepAchievementLevels = [
+                { name: '初學者', icon: '😴', threshold: 5 },
+                { name: '睡眠新手', icon: '🛌', threshold: 10 },
+                { name: '睡眠達人', icon: '🌙', threshold: 20 },
+                { name: '睡眠專家', icon: '⭐', threshold: 30 },
+                { name: '睡眠大師', icon: '💫', threshold: 50 }
+            ];
+            
+            // 顯示一般成就
+            sleepAchievementLevels.forEach(level => {
+                const isAchieved = maxConsecutiveDays >= level.threshold;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = level.icon;
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = level.name;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                progressDiv.textContent = isAchieved ? '已達成' : `${maxConsecutiveDays}/${level.threshold}`;
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                allSleepAchievements.appendChild(achievementDiv);
+            });
+            
+            // 顯示循環成就
+            const hundredCount = Math.floor(maxConsecutiveDays / 100);
+            for (let i = 1; i <= hundredCount + 1; i++) {
+                const isAchieved = i <= hundredCount;
+                const achievementDiv = document.createElement('div');
+                achievementDiv.className = 'achievement';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'achievement-icon';
+                iconDiv.textContent = '👑';
+                iconDiv.style.opacity = isAchieved ? '1' : '0.3';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'achievement-name';
+                nameDiv.textContent = `睡眠傳奇 (${i}x100)`;
+                
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'achievement-progress';
+                if (isAchieved) {
+                    progressDiv.textContent = '已達成';
+                } else {
+                    const currentProgress = maxConsecutiveDays % 100;
+                    progressDiv.textContent = `${currentProgress}/100`;
+                }
+                
+                achievementDiv.appendChild(iconDiv);
+                achievementDiv.appendChild(nameDiv);
+                achievementDiv.appendChild(progressDiv);
+                
+                allSleepAchievements.appendChild(achievementDiv);
+            }
+        }
+
+        // 關閉模態框
+        document.getElementById('closeHistoryModal').addEventListener('click', function() {
+            document.getElementById('historyModal').style.display = 'none';
+        });
+
+        document.getElementById('closeAchievementsModal').addEventListener('click', function() {
+            document.getElementById('achievementsModal').style.display = 'none';
+        });
+
+        // 點擊模態框外部關閉
+        window.addEventListener('click', function(event) {
+            const historyModal = document.getElementById('historyModal');
+            const achievementsModal = document.getElementById('achievementsModal');
+            
+            if (event.target === historyModal) {
+                historyModal.style.display = 'none';
+            }
+            
+            if (event.target === achievementsModal) {
+                achievementsModal.style.display = 'none';
+            }
+        });
+
+        // 更新圖表
+        let statsChart = null;
+
+        document.getElementById('updateChart').addEventListener('click', function() {
+            const chartType = document.getElementById('chartType').value;
+            const chartPeriod = document.getElementById('chartPeriod').value;
+            const chartStyle = document.getElementById('chartStyle').value;
+            
+            updateChart(chartType, chartPeriod, chartStyle);
+        });
+
+        function updateChart(type, period, style) {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            // 如果已有圖表，先銷毀
+            if (statsChart) {
+                statsChart.destroy();
+            }
+            
+            // 獲取數據
+            let data = [];
+            let labels = [];
+            let title = '';
+            
+            if (type === 'pomodoro') {
+                title = '番茄鐘統計';
+                data = prepareChartData(pomodoroRecords, 'count', period);
+            } else if (type === 'recording') {
+                title = '錄音筆學習統計';
+                data = prepareChartData(recordingRecords, 'time', period);
+            } else if (type === 'sleep') {
+                title = '睡眠時間統計';
+                data = prepareChartData(sleepRecords, 'hours', period);
+            }
+            
+            labels = data.map(item => item.label);
+            const values = data.map(item => item.value);
+            
+            // 設置顏色
+            const colors = [
+                'rgba(255, 107, 107, 0.7)',
+                'rgba(78, 205, 196, 0.7)',
+                'rgba(255, 209, 102, 0.7)',
+                'rgba(106, 5, 114, 0.7)',
+                'rgba(26, 147, 111, 0.7)'
+            ];
+            
+            const borderColors = [
+                'rgba(255, 107, 107, 1)',
+                'rgba(78, 205, 196, 1)',
+                'rgba(255, 209, 102, 1)',
+                'rgba(106, 5, 114, 1)',
+                'rgba(26, 147, 111, 1)'
+            ];
+            
+            // 創建圖表
+            statsChart = new Chart(ctx, {
+                type: style,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: values,
+                        backgroundColor: style === 'line' ? 'rgba(255, 255, 255, 0.1)' : colors,
+                        borderColor: style === 'line' ? borderColors[0] : borderColors,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: style === 'line'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title,
+                            font: {
+                                size: 18
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 準備圖表數據
+        function prepareChartData(records, valueKey, period) {
+            // 按日期排序
+            const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            // 獲取日期範圍
+            const today = new Date();
+            let startDate = new Date();
+            
+            if (period === 'week') {
+                startDate.setDate(today.getDate() - 7);
+            } else if (period === 'month') {
+                startDate.setMonth(today.getMonth() - 1);
+            } else if (period === 'quarter') {
+                startDate.setMonth(today.getMonth() - 3);
+            } else if (period === 'year') {
+                startDate.setFullYear(today.getFullYear() - 1);
+            }
+            
+            // 篩選日期範圍內的記錄
+            const filteredRecords = sortedRecords.filter(record => {
+                const recordDate = new Date(record.date);
+                return recordDate >= startDate && recordDate <= today;
+            });
+            
+            // 按週/月/季/年分組
+            const groupedData = {};
+            
+            filteredRecords.forEach(record => {
+                const recordDate = new Date(record.date);
+                let key = '';
+                
+                if (period === 'week') {
+                    // 按天分組
+                    key = record.date;
+                } else if (period === 'month') {
+                    // 按週分組
+                    const weekStart = new Date(recordDate);
+                    weekStart.setDate(recordDate.getDate() - recordDate.getDay());
+                    key = weekStart.toISOString().split('T')[0];
+                } else if (period === 'quarter') {
+                    // 按月分組
+                    key = `${recordDate.getFullYear()}-${recordDate.getMonth() + 1}`;
+                } else if (period === 'year') {
+                    // 按季分組
+                    const quarter = Math.floor(recordDate.getMonth() / 3) + 1;
+                    key = `${recordDate.getFullYear()}-Q${quarter}`;
+                }
+                
+                if (!groupedData[key]) {
+                    groupedData[key] = {
+                        label: key,
+                        value: 0
+                    };
+                }
+                
+                groupedData[key].value += record[valueKey];
+            });
+            
+            // 轉換為數組並按日期排序
+            return Object.values(groupedData).sort((a, b) => new Date(a.label) - new Date(b.label));
+        }
+
+        // 儲存設定
+        document.getElementById('saveSettings').addEventListener('click', function() {
+            const sleepGoal = parseFloat(document.getElementById('sleepGoal').value);
+            const bedTimeLimit = document.getElementById('bedTimeLimit').value;
+            
+            if (isNaN(sleepGoal) || sleepGoal < 0 || !bedTimeLimit) {
+                showNotification('請輸入有效的設定');
+                return;
+            }
+            
+            settings = {
+                sleepGoal,
+                bedTimeLimit
+            };
+            
+            localStorage.setItem('settings', JSON.stringify(settings));
+            showNotification('設定已儲存');
+            
+            // 重新檢查睡眠成就
+            updateAllAchievements();
+        });
+
+        // 載入設定
+        function loadSettings() {
+            document.getElementById('sleepGoal').value = settings.sleepGoal;
+            document.getElementById('bedTimeLimit').value = settings.bedTimeLimit;
+        }
+
+        // 初始化頁面
+        function init() {
+            updateCurrentDate();
+            updatePomodoroStats();
+            updateRecordingStats();
+            updateSleepStats();
+            updateRecentHistory();
+            updateRecentAchievements();
+            loadSettings();
+            
+            // 初始化圖表
+            updateChart('pomodoro', 'week', 'bar');
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
